@@ -1,0 +1,11 @@
+.git
+.github
+**/__pycache__
+**/.pytest_cache
+**/node_modules
+**/dist
+.env
+.venv
+backend/data/*.sqlite3
+backend/data/vector_cache.json
+*.log

@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: asset-integrity-copilot-demo
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: OPENAI_MODEL
+        value: gpt-4.1-mini
+      - key: ENABLE_EMBEDDINGS
+        value: "true"
+      - key: MAX_ESTIMATED_SPEND_USD
+        value: "3.0"
+      - key: MAX_API_REQUESTS_PER_HOUR
+        value: "35"
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: DEMO_PASSWORD
+        sync: false

@@ -1,0 +1,478 @@
+{
+  "evaluation_type": "OFFLINE keyword (BM25) retrieval only",
+  "dataset": "15 fictional oil-and-gas SOP/case documents, 36 manually labeled queries, 5 unrelated questions",
+  "timestamp_utc": "2026-11-09T02:58:02.519762+00:00",
+  "total_queries": 36,
+  "hit_at_1": 0.9167,
+  "hit_at_3": 1.0,
+  "mean_reciprocal_rank_at_3": 0.9583,
+  "unrelated_queries_rejected": 5,
+  "total_unrelated_queries": 5,
+  "cases": [
+    {
+      "query": "P-204 elevated vibration and seal leak history",
+      "expected": [
+        "CASE-INC-007",
+        "SOP-PMP-001"
+      ],
+      "returned": [
+        "CASE-INC-007",
+        "SOP-PMP-001",
+        "GUIDE-OPS-014"
+      ],
+      "reciprocal_rank": 1.0
+    },
+    {
+      "query": "pump P-204 incident INC-007 maintenance evidence",
+      "expected": [
+        "CASE-INC-007"
+      ],
+      "returned": [
+        "CASE-INC-007",
+        "SOP-PMP-001",
+        "SOP-PMP-002"
+      ],
+      "reciprocal_rank": 1.0
+    },
+    {
+      "query": "centrifugal pump vibration trend investigation",
+      "expected": [
+        "SOP-PMP-001"
+      ],
+      "returned": [
+        "SOP-PMP-001",
+        "CASE-INC-007",
+        "SOP-VLV-003"
+      ],
+      "reciprocal_rank": 1.0
+    },
+    {
+      "query": "what to record when a mechanical seal leaks",
+      "expected": [
+        "SOP-PMP-001"
+      ],
+      "returned": [
+        "SOP-PMP-001",
+        "SOP-PV-006",
+        "CASE-INC-007"
+      ],
+      "reciprocal_rank": 1.0
+    },
+    {
+      "query": "pump bearing preventive maintenance work orders",
+      "expected": [
+        "SOP-PMP-002"
+      ],
+      "returned": [
+        "SOP-PMP-002",
+        "CASE-INC-007",
+        "SOP-VLV-004"
+      ],
+      "reciprocal_rank": 1.0
+    },
+    {
+      "query": "rotating equipment lubrication maintenance history",
+      "expected": [
+        "SOP-PMP-002"
+      ],
+      "returned": [
+        "SOP-PMP-002",
+        "POL-AI-010",
+        "CASE-INC-012"
+      ],
+      "reciprocal_rank": 1.0
+    },
+    {
+      "query": "compare pump condition monitoring readings",
+      "expected": [
+        "SOP-PMP-001",
+        "SOP-PMP-002"
+      ],
+      "returned": [
+        "SOP-PMP-001",
+        "SOP-PV-005",
+        "CASE-INC-007"
+      ],
+      "reciprocal_rank": 1.0
+    },
+    {
+      "query": "CV-310 actuator position lag and feedback",
+      "expected": [
+        "CASE-INC-010",
+        "SOP-VLV-003"
+      ],
+      "returned": [
+        "CASE-INC-010",
+        "SOP-VLV-003"
+      ],
+      "reciprocal_rank": 1.0
+    },
+    {
+      "query": "control valve CV-310 incident INC-010",
+      "expected": [
+        "CASE-INC-010"
+      ],
+      "returned": [
+        "CASE-INC-010",
+        "SOP-VLV-003",
+        "GUIDE-OPS-014"
+      ],
+      "reciprocal_rank": 1.0
+    },
+    {
+      "query": "positioner calibration and actuator travel deviation",
+      "expected": [
+        "SOP-VLV-003"
+      ],
+      "returned": [
+        "SOP-VLV-003",
+        "CASE-INC-010",
+        "SOP-PV-005"
+      ],
+      "reciprocal_rank": 1.0
+    },
+    {
+      "query": "control valve response delay investigation",
+      "expected": [
+        "SOP-VLV-003"
+      ],
+      "returned": [
+        "SOP-VLV-003",
+        "CASE-INC-010",
+        "SOP-PMP-001"
+      ],
+      "reciprocal_rank": 1.0
+    },
+    {
+      "query": "valve leakage and maintenance handoff",
+      "expected": [
+        "SOP-VLV-004"
+      ],
+      "returned": [
+        "SOP-VLV-004",
+        "SOP-PTW-008",
+        "SOP-PMP-001"
+      ],
+      "reciprocal_rank": 1.0
+    },
+    {
+      "query": "valve packing leakage observation documentation",
+      "expected": [
+        "SOP-VLV-004"
+      ],
+      "returned": [
+        "SOP-VLV-004",
+        "SOP-PMP-002",
+        "CASE-INC-010"
+      ],
+      "reciprocal_rank": 1.0
+    },
+    {
+      "query": "instrument air and positioner record review",
+      "expected": [
+        "SOP-VLV-003"
+      ],
+      "returned": [
+        "SOP-VLV-003",
+        "SOP-VLV-004",
+        "SOP-MI-007"
+      ],
+      "reciprocal_rank": 1.0
+    },
+    {
+      "query": "PV-120 UT thickness corrosion trend",
+      "expected": [
+        "CASE-INC-012",
+        "SOP-PV-005"
+      ],
+      "returned": [
+        "CASE-INC-012",
+        "SOP-PV-005",
+        "SOP-PV-006"
+      ],
+      "reciprocal_rank": 1.0
+    },
+    {
+      "query": "pressure vessel PV-120 incident INC-012",
+      "expected": [
+        "CASE-INC-012"
+      ],
+      "returned": [
+        "CASE-INC-012",
+        "SOP-PV-005",
+        "SOP-PV-006"
+      ],
+      "reciprocal_rank": 1.0
+    },
+    {
+      "query": "ultrasonic thickness monitoring vessel wall",
+      "expected": [
+        "SOP-PV-005"
+      ],
+      "returned": [
+        "SOP-PV-005",
+        "CASE-INC-012",
+        "SOP-PV-006"
+      ],
+      "reciprocal_rank": 1.0
+    },
+    {
+      "query": "how to document thickness monitoring location",
+      "expected": [
+        "SOP-PV-005"
+      ],
+      "returned": [
+        "SOP-PV-005",
+        "CASE-INC-012",
+        "SOP-PMP-001"
+      ],
+      "reciprocal_rank": 1.0
+    },
+    {
+      "query": "external vessel coating damage corrosion",
+      "expected": [
+        "SOP-PV-006"
+      ],
+      "returned": [
+        "SOP-PV-006",
+        "CASE-INC-012",
+        "SOP-PV-005"
+      ],
+      "reciprocal_rank": 1.0
+    },
+    {
+      "query": "external corrosion vessel supports walkdown",
+      "expected": [
+        "SOP-PV-006"
+      ],
+      "returned": [
+        "SOP-PV-006",
+        "CASE-INC-012",
+        "SOP-PV-005"
+      ],
+      "reciprocal_rank": 1.0
+    },
+    {
+      "query": "how is remaining life assessed with missing design data",
+      "expected": [
+        "SOP-PV-005",
+        "SOP-PV-006"
+      ],
+      "returned": [
+        "CASE-INC-012",
+        "SOP-PV-005",
+        "SOP-PV-006"
+      ],
+      "reciprocal_rank": 0.5
+    },
+    {
+      "query": "mechanical integrity nonconformance review hold",
+      "expected": [
+        "SOP-MI-007"
+      ],
+      "returned": [
+        "SOP-MI-007",
+        "SOP-PV-006",
+        "POL-AI-010"
+      ],
+      "reciprocal_rank": 1.0
+    },
+    {
+      "query": "corrective action and repair release authorization",
+      "expected": [
+        "SOP-MI-007"
+      ],
+      "returned": [
+        "SOP-MI-007",
+        "SOP-PMP-002",
+        "SOP-VLV-004"
+      ],
+      "reciprocal_rank": 1.0
+    },
+    {
+      "query": "what are limits for AI engineering disposition",
+      "expected": [
+        "POL-AI-010",
+        "SOP-MI-007"
+      ],
+      "returned": [
+        "POL-AI-010",
+        "SOP-MI-007",
+        "CASE-INC-007"
+      ],
+      "reciprocal_rank": 1.0
+    },
+    {
+      "query": "permit to work isolation requirements",
+      "expected": [
+        "SOP-PTW-008"
+      ],
+      "returned": [
+        "SOP-PTW-008",
+        "SOP-VLV-004",
+        "GUIDE-OPS-014"
+      ],
+      "reciprocal_rank": 1.0
+    },
+    {
+      "query": "lockout tagout unauthorized pump restart",
+      "expected": [
+        "SOP-PTW-008"
+      ],
+      "returned": [
+        "SOP-PTW-008",
+        "SOP-PMP-001",
+        "GUIDE-SEC-015"
+      ],
+      "reciprocal_rank": 1.0
+    },
+    {
+      "query": "safe handoff for energized maintenance",
+      "expected": [
+        "SOP-PTW-008"
+      ],
+      "returned": [
+        "SOP-VLV-004",
+        "SOP-PTW-008",
+        "SOP-PV-006"
+      ],
+      "reciprocal_rank": 0.5
+    },
+    {
+      "query": "equipment tag traceability inspection record lineage",
+      "expected": [
+        "SOP-DATA-009"
+      ],
+      "returned": [
+        "SOP-DATA-009",
+        "SOP-MI-007",
+        "SOP-PV-005"
+      ],
+      "reciprocal_rank": 1.0
+    },
+    {
+      "query": "link inspection IDs to work orders and incidents",
+      "expected": [
+        "SOP-DATA-009",
+        "SOP-MI-007"
+      ],
+      "returned": [
+        "SOP-PMP-001",
+        "SOP-MI-007",
+        "GUIDE-OPS-014"
+      ],
+      "reciprocal_rank": 0.5
+    },
+    {
+      "query": "record inspector date measurement unit evidence",
+      "expected": [
+        "SOP-DATA-009",
+        "SOP-PV-005"
+      ],
+      "returned": [
+        "SOP-DATA-009",
+        "SOP-PV-005",
+        "SOP-PV-006"
+      ],
+      "reciprocal_rank": 1.0
+    },
+    {
+      "query": "can agent change valve setpoints or approve permits",
+      "expected": [
+        "POL-AI-010"
+      ],
+      "returned": [
+        "POL-AI-010",
+        "SOP-VLV-003",
+        "SOP-PTW-008"
+      ],
+      "reciprocal_rank": 1.0
+    },
+    {
+      "query": "prompt injection embedded instructions in documents",
+      "expected": [
+        "POL-AI-010",
+        "GUIDE-SEC-015"
+      ],
+      "returned": [
+        "POL-AI-010",
+        "GUIDE-SEC-015"
+      ],
+      "reciprocal_rank": 1.0
+    },
+    {
+      "query": "how to test adversarial tool access controls",
+      "expected": [
+        "GUIDE-SEC-015"
+      ],
+      "returned": [
+        "GUIDE-SEC-015",
+        "POL-AI-010"
+      ],
+      "reciprocal_rank": 1.0
+    },
+    {
+      "query": "what tools can the agent call",
+      "expected": [
+        "GUIDE-SEC-015",
+        "POL-AI-010"
+      ],
+      "returned": [
+        "GUIDE-SEC-015",
+        "POL-AI-010"
+      ],
+      "reciprocal_rank": 1.0
+    },
+    {
+      "query": "operator quickstart asking questions with asset tags",
+      "expected": [
+        "GUIDE-OPS-014"
+      ],
+      "returned": [
+        "GUIDE-OPS-014",
+        "GUIDE-SEC-015",
+        "POL-AI-010"
+      ],
+      "reciprocal_rank": 1.0
+    },
+    {
+      "query": "how to read cited source ids and verify evidence",
+      "expected": [
+        "GUIDE-OPS-014"
+      ],
+      "returned": [
+        "GUIDE-OPS-014",
+        "SOP-PMP-001",
+        "POL-AI-010"
+      ],
+      "reciprocal_rank": 1.0
+    }
+  ],
+  "negative_cases": [
+    {
+      "query": "deep sea plankton aquarium",
+      "returned": [],
+      "rejected": true
+    },
+    {
+      "query": "Who won the world cup?",
+      "returned": [],
+      "rejected": true
+    },
+    {
+      "query": "How much is the CEO salary?",
+      "returned": [],
+      "rejected": true
+    },
+    {
+      "query": "quantum burrito supernova",
+      "returned": [],
+      "rejected": true
+    },
+    {
+      "query": "Explain medieval poetry analysis",
+      "returned": [],
+      "rejected": true
+    }
+  ]
+}
