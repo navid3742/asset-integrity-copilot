@@ -1,13 +1,13 @@
 {
   "evaluation_type": "OFFLINE keyword (BM25) retrieval only",
-  "dataset": "15 fictional oil-and-gas SOP/case documents, 36 manually labeled queries, 5 unrelated questions",
-  "timestamp_utc": "2026-11-09T02:58:02.519762+00:00",
+  "dataset": "15 fictional oil-and-gas SOP/case documents, 36 hand-labelled questions, 10 unrelated questions (5 share a word with the corpus)",
+  "timestamp_utc": "2026-11-10T00:56:17.023032+00:00",
   "total_queries": 36,
   "hit_at_1": 0.9167,
   "hit_at_3": 1.0,
   "mean_reciprocal_rank_at_3": 0.9583,
-  "unrelated_queries_rejected": 5,
-  "total_unrelated_queries": 5,
+  "unrelated_queries_rejected": 10,
+  "total_unrelated_queries": 10,
   "cases": [
     {
       "query": "P-204 elevated vibration and seal leak history",
@@ -471,6 +471,31 @@
     },
     {
       "query": "Explain medieval poetry analysis",
+      "returned": [],
+      "rejected": true
+    },
+    {
+      "query": "what is the best pizza in town for a pump party",
+      "returned": [],
+      "rejected": true
+    },
+    {
+      "query": "who won the world cup in valve",
+      "returned": [],
+      "rejected": true
+    },
+    {
+      "query": "How much is the CEO salary for pressure",
+      "returned": [],
+      "rejected": true
+    },
+    {
+      "query": "write a poem about valves",
+      "returned": [],
+      "rejected": true
+    },
+    {
+      "query": "tell me a joke",
       "returned": [],
       "rejected": true
     }
