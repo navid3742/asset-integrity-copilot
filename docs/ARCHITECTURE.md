@@ -42,7 +42,7 @@ Report workflow (not reachable by the agent):
 
 - The agent has three read-only tools. Unknown tool names and malformed arguments are rejected by `dispatch_tool`.
 - `tool_choice="required"` forces at least one lookup before the first answer; the SDK then resets it to `auto`.
-- An output guardrail blocks answers that cite a document ID (e.g. `[SOP-PMP-001]`) that wasn't returned by `search_documents` during the run, and answers that claim the agent approved, deleted or changed something. It doesn't verify every factual statement.
+- An output guardrail blocks answers that cite a document ID (e.g. `SOP-PMP-001`) not returned by `search_documents` in that run, or a record ID (`INC-012`, `WO-PV-120-02`, `INSP-P-204-03`) that didn't appear in any tool output. It also blocks answers claiming the agent approved, deleted or changed something. It doesn't check numbers, dates or whether a summary leaves something out.
 - Retrieved text is treated as data. The system prompt tells the model to ignore instructions inside documents or tool output.
 - Live requests are serialised and capped by an estimated spend limit, an hourly request limit and a shared password. These protect API credit; they aren't user authentication.
 

@@ -25,7 +25,7 @@ React UI ──POST /api/chat──► FastAPI ──► Agents SDK Runner
 
 The agent has three tools, all read-only. It can't run SQL, write records or approve anything. Reports are drafted and approved through separate endpoints that only the UI calls, and approval needs an explicit confirmation.
 
-Before an answer is returned, an output guardrail checks every document ID the model cited (like `[SOP-PMP-001]`) against what `search_documents` actually returned during that run. Answers citing documents that weren't retrieved are blocked, as are answers claiming the agent approved or changed something.
+Before an answer is returned, an output guardrail checks every ID in it against what the tools actually returned during that run: document IDs (like `SOP-PMP-001`) against `search_documents`, and record IDs (like `INC-012` or `WO-PV-120-02`) against all tool outputs. Answers citing anything that wasn't retrieved are blocked, as are answers claiming the agent approved or changed something.
 
 Without an API key and password the app runs in offline mode: the same database and keyword search, with a deterministic summary instead of a model. That's useful for running it locally without spending anything.
 
@@ -49,7 +49,7 @@ Keyword retrieval on 36 hand-labelled questions and 10 off-topic ones:
 |---:|---:|---:|---:|
 | 91.7% | 100% | 0.958 | 10/10 |
 
-Adding near-miss questions ("best pizza for a pump party") exposed a bug where a single matching word made any question look relevant. Off-topic rejection was 5/10 before the fix. The write-up is in [docs/EVALUATION.md](docs/EVALUATION.md). The questions were written with the documents in view, so treat these numbers as a regression check.
+Adding near-miss questions ("best pizza for a pump party") exposed a bug where a single matching word made any question look relevant. Off-topic rejection was 5/10 before the fix. The write-up is in [docs/EVALUATION.md](docs/EVALUATION.md). The questions were written with the documents in view, so treat these numbers as a regression check. Results from testing the live agent, including a guardrail bug they uncovered, are in the same file.
 
 ## Running locally
 
@@ -72,7 +72,7 @@ Live mode turns on only when both `OPENAI_API_KEY` and `DEMO_PASSWORD` are set. 
 ## Tests
 
 ```bash
-python -m pytest -q                                              # 25 offline tests
+python -m pytest -q                                              # 28 offline tests
 PYTHONPATH=backend python backend/scripts/evaluate_retrieval.py  # retrieval metrics
 ruff check backend && (cd frontend && npm run format:check && npm run build)
 ```
@@ -108,7 +108,7 @@ docs/                 architecture and evaluation notes
 ## Limitations and next steps
 
 - No agent-level eval yet: tool-call accuracy, citation validity and refusal rate on a fixed question set.
-- The guardrail checks document citations, not database IDs or numbers in the answer.
+- The guardrail checks that cited IDs were retrieved, not that numbers, dates or trends are described correctly.
 - Retrieval has no stemming, so "leaks" doesn't match "leak".
 - SQLite on an ephemeral disk; Postgres would be needed for anything persistent.
 
