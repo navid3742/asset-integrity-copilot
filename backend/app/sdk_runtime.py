@@ -31,6 +31,14 @@ from pydantic import Field
 from . import agent as foundation
 from .config import ENABLE_SDK_TRACING, MAX_TOOL_ROUNDS, MODEL
 
+# Document IDs: SOP-PMP-001, CASE-INC-007, POL-AI-010, GUIDE-SEC-015. Matched anywhere in
+# the answer, not just inside [brackets]: the model often writes "(SOP-PMP-001)" or
+# "[SOP-PV-005, CASE-INC-012]", which a bracket-only pattern silently skipped.
+_DOCUMENT_ID = re.compile(r"\b(?:SOP|CASE|GUIDE|POL)-[A-Z]+-\d{3}\b")
+# Database record IDs: INC-012, WO-PV-120-02, INSP-P-204-03. The lookbehind stops the
+# "INC-007" inside "CASE-INC-007" from being read as a record ID.
+_RECORD_ID = re.compile(r"(?<![A-Z-])(?:INC-\d{3}|(?:WO|INSP)-(?:P|CV|PV)-\d{3}-\d{2})\b")
+
 
 @dataclass
 class AssetRunContext:
@@ -38,6 +46,8 @@ class AssetRunContext:
 
     sources: dict = field(default_factory=dict)
     traces: list = field(default_factory=list)
+    # Every record ID (INC-, WO-, INSP-) that appeared in any tool output this run.
+    record_ids: set = field(default_factory=set)
 
 
 def _record_tool(context: RunContextWrapper[AssetRunContext], name: str, arguments: dict) -> str:
@@ -51,6 +61,7 @@ def _record_tool(context: RunContextWrapper[AssetRunContext], name: str, argumen
     if name == "search_documents":
         for source in outcome.get("results", []):
             state.sources[source["id"]] = source
+    state.record_ids.update(_RECORD_ID.findall(json.dumps(outcome)))
     state.traces.append(
         {
             "tool": name,
@@ -107,7 +118,6 @@ async def get_asset_history(
     return _record_tool(ctx, "get_asset_history", {"asset_id": asset_id})
 
 
-_DOCUMENT_REFERENCE = re.compile(r"\[((?:SOP|CASE|GUIDE|POL)-[A-Z0-9-]+)\]")
 _UNAUTHORIZED_CLAIM = re.compile(
     r"\b(?:I|we|Asset Integrity Copilot)\s+(?:have\s+)?(?:already\s+)?"
     r"(?:approved|deleted|modified|changed|overridden)\b",
@@ -115,21 +125,24 @@ _UNAUTHORIZED_CLAIM = re.compile(
 )
 
 
-def check_final_answer(answer: str, sources: dict) -> dict:
-    """Simple deterministic verification, not a complete grounding validator.
+def check_final_answer(answer: str, sources: dict, record_ids: set | None = None) -> dict:
+    """Deterministic citation check run on every live answer.
 
-    Block invented *document* IDs and statements that the assistant performed
-    write operations. Inspection and incident IDs from database tools are not
-    document citations and are not validated by this particular check.
+    Blocks the answer if it names a document that search_documents didn't return
+    in this run, a record ID that no tool returned, or claims the agent performed
+    a write. It doesn't check numbers, dates or whether a claim follows from its
+    source.
     """
-    cited = set(_DOCUMENT_REFERENCE.findall(answer))
-    available = {record["doc_id"] for record in sources.values()}
-    unsupported = sorted(cited - available)
+    cited_docs = set(_DOCUMENT_ID.findall(answer))
+    retrieved_docs = {record["doc_id"] for record in sources.values()}
+    unsupported_docs = sorted(cited_docs - retrieved_docs)
+    unsupported_records = sorted(set(_RECORD_ID.findall(answer)) - (record_ids or set()))
     illegal_action = bool(_UNAUTHORIZED_CLAIM.search(answer))
     return {
-        "unsupported_document_citations": unsupported,
+        "unsupported_document_citations": unsupported_docs,
+        "unsupported_record_ids": unsupported_records,
         "claimed_unauthorized_action": illegal_action,
-        "blocked": bool(unsupported or illegal_action),
+        "blocked": bool(unsupported_docs or unsupported_records or illegal_action),
     }
 
 
@@ -157,8 +170,8 @@ async def verify_final_output(
     current_agent: Agent,
     output: str,
 ) -> GuardrailFunctionOutput:
-    """Reject invented doc references and claims that the agent wrote records."""
-    verdict = check_final_answer(str(output), ctx.context.sources)
+    """Block answers citing IDs that weren't retrieved, or claiming the agent wrote records."""
+    verdict = check_final_answer(str(output), ctx.context.sources, ctx.context.record_ids)
     return GuardrailFunctionOutput(output_info=verdict, tripwire_triggered=verdict["blocked"])
 
 

@@ -125,6 +125,59 @@ def test_sdk_output_guardrail_blocks_invented_documents(client, monkeypatch):
     assert not sdk_runtime.check_final_answer("See [SOP-PMP-001].", source)["blocked"]
 
 
+# Trimmed from a real live answer to "Is PV-120 safe to restart?". The bracket-only
+# pattern used before found none of these citations, so nothing was being checked.
+PV120_ANSWER = (
+    "Minimum allowable thickness is unknown (INSP-PV-120-01 to INSP-PV-120-03). There is an "
+    "open high-severity incident (INC-012). Follow-up actions are pending (WO-PV-120-01 and "
+    "WO-PV-120-02). No restart criteria were found [SOP-PV-005, SOP-PV-006, CASE-INC-012]."
+)
+PV120_SOURCES = {
+    f"{doc}:1": {"doc_id": doc} for doc in ("CASE-INC-012", "SOP-PV-005", "SOP-PV-006")
+}
+
+
+def _history_record_ids(sdk_runtime, tag):
+    state = sdk_runtime.AssetRunContext()
+    sdk_runtime._record_tool(FakeContext(state), "get_asset_history", {"asset_id": tag})
+    return state.record_ids
+
+
+def test_guardrail_accepts_grounded_live_answer(client, monkeypatch):
+    install_fake_sdk(monkeypatch, lambda *a, **k: None)
+    from app import sdk_runtime
+
+    record_ids = _history_record_ids(sdk_runtime, "PV-120")
+    assert {"INC-012", "WO-PV-120-02", "INSP-PV-120-03"} <= record_ids
+    verdict = sdk_runtime.check_final_answer(PV120_ANSWER, PV120_SOURCES, record_ids)
+    assert not verdict["blocked"], verdict
+
+
+def test_guardrail_checks_citations_in_lists_and_parentheses(client, monkeypatch):
+    install_fake_sdk(monkeypatch, lambda *a, **k: None)
+    from app import sdk_runtime
+
+    record_ids = _history_record_ids(sdk_runtime, "PV-120")
+    missing_one = {k: v for k, v in PV120_SOURCES.items() if v["doc_id"] != "SOP-PV-006"}
+    verdict = sdk_runtime.check_final_answer(PV120_ANSWER, missing_one, record_ids)
+    assert verdict["blocked"] and verdict["unsupported_document_citations"] == ["SOP-PV-006"]
+    assert sdk_runtime.check_final_answer("Per the pump SOP (SOP-PMP-001).", {})["blocked"]
+
+
+def test_guardrail_blocks_record_ids_no_tool_returned(client, monkeypatch):
+    install_fake_sdk(monkeypatch, lambda *a, **k: None)
+    from app import sdk_runtime
+
+    record_ids = _history_record_ids(sdk_runtime, "PV-120")
+    verdict = sdk_runtime.check_final_answer("See incident INC-099.", {}, record_ids)
+    assert verdict["unsupported_record_ids"] == ["INC-099"]
+    # A record from a different asset than the one looked up is also rejected.
+    assert sdk_runtime.check_final_answer("See WO-P-204-02.", {}, record_ids)["blocked"]
+    # "CASE-INC-007" is a document ID; it must not be read as record INC-007.
+    case_doc = {"CASE-INC-007:0": {"doc_id": "CASE-INC-007"}}
+    assert not sdk_runtime.check_final_answer("See [CASE-INC-007].", case_doc)["blocked"]
+
+
 def test_sdk_output_tripwire_yields_safe_response(client, monkeypatch):
     def raise_block(*args, **kwargs):
         raise FakeBlockedError("unsafe")
