@@ -4,9 +4,10 @@ An AI assistant for reviewing equipment records in an oil and gas facility. You 
 
 All plant data in this repo is synthetic: 60 assets, 180 inspections, 120 work orders, 12 incidents and 15 procedure documents.
 
-**Live demo:** https://asset-integrity-copilot.onrender.com/ (the live agent calls a paid API, so it's password-protected; access code available on request)
+**Live demo:** https://asset-integrity-copilot.onrender.com/ (the live agent calls a paid API, so it's password-protected; access code is available on request)
 
-<!-- Add a screenshot or GIF here: ![Asset Integrity Copilot](docs/screenshot.png) -->
+
+![Asset Integrity Copilot answering a question with cited sources and a tool trace](docs/screenshot.png)
 
 ## Stack
 
