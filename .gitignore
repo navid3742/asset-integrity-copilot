@@ -1,45 +1,27 @@
-# Secrets and developer environments
+# Secrets
 .env
 .env.*
 !.env.example
+
+# Python
 .venv/
 venv/
 __pycache__/
 *.py[cod]
 .pytest_cache/
-.DS_Store
+.ruff_cache/
 
-# Frontend build (generated on Render)
-frontend/node_modules/
+# Frontend
+node_modules/
 frontend/dist/
 frontend/*.tsbuildinfo
 
-# Runtime data/cache: never put private files in the repository
-backend/data/*.sqlite3
-backend/data/*.sqlite3-shm
-backend/data/*.sqlite3-wal
+# Runtime data (recreated from the seed files on startup)
+*.sqlite3
+*.sqlite3-shm
+*.sqlite3-wal
 backend/data/vector_cache.json
 *.log
 
-# Private environment variables
-.env
-.env.*
-!.env.example
-
-# Python environment and caches
-.venv/
-__pycache__/
-.pytest_cache/
-*.pyc
-
-# Node.js
-node_modules/
-frontend/dist/
-
-# Local database and generated files
-*.sqlite3
-*.db
-backend/data/vector_cache.json
-
-# macOS
+# OS
 .DS_Store
