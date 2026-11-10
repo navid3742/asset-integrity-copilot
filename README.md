@@ -1,150 +1,117 @@
-# Asset Integrity Copilot — Oil & Gas Edition (v4)
+# Asset Integrity Copilot
 
-**An independent, fictional industrial AI portfolio demo.** A single OpenAI Agents SDK agent retrieves technical references and connected records for pumps, control valves and pressure vessels. It does not control industrial equipment, approve engineering work, or establish fitness for service.
+An AI assistant for reviewing equipment records in an oil and gas facility. You ask about a pump, control valve or pressure vessel, and an agent pulls its inspection readings, work orders and incidents from a database, finds the relevant procedures, and writes a summary that cites where each fact came from.
 
-> All assets, inspection measurements, procedures, work orders, incident cases, personnel and statuses in this repository are **synthetic**. The documents are not authorized operational SOPs. Do not upload confidential plant documents or use model responses to make equipment safety decisions.
+All plant data in this repo is synthetic: 60 assets, 180 inspections, 120 work orders, 12 incidents and 15 procedure documents.
 
-## What changed from Factory Copilot v3?
+**Live demo:** https://asset-integrity-copilot.onrender.com/ (the live agent calls a paid API, so it's password-protected; access code available on request)
 
-The AI design stayed the same: **React + TypeScript**, **FastAPI**, **OpenAI Agents SDK**, **BM25 with optional embedding similarity**, **SQLite**, a dark industrial dashboard, separate report approval and tests. We migrated aerospace-style component data to a coherent oil-and-gas mechanical-integrity dataset with new schema, examples, interface labels, tests and evaluation.
+<!-- Add a screenshot or GIF here: ![Asset Integrity Copilot](docs/screenshot.png) -->
 
-- **60 assets:** 20 pumps (`P-201`–`P-220`), 20 control valves (`CV-301`–`CV-320`), 20 pressure vessels (`PV-101`–`PV-120`).
-- **180 inspection observations:** including vibration velocity (mm/s RMS), actuator travel deviation (%) and ultrasonic thickness (mm), depending on equipment class.
-- **120 maintenance work orders:** completed records and open follow-up activities.
-- **12 incident reports** linked to asset IDs, including three showcase cases.
-- **15 original fictional knowledge documents:** SOPs, incident summaries, AI governance and quickstart guidance.
+## Stack
 
-**Three interactive demos:**
+React and TypeScript (Vite), FastAPI, OpenAI Agents SDK, BM25 with optional OpenAI embeddings, SQLite, Docker on Render.
 
-| Tag | Scenario | Linked case | Related synthetic guidance |
-|---|---|---|---|
-| `P-204` | Elevated vibration and mechanical-seal leakage observation | `INC-007` | `SOP-PMP-001`, `CASE-INC-007` |
-| `CV-310` | Control-valve actuator lag and positioner feedback discrepancy | `INC-010` | `SOP-VLV-003`, `CASE-INC-010` |
-| `PV-120` | Vessel thickness trend and external corrosion indication | `INC-012` | `SOP-PV-005`, `CASE-INC-012` |
-
-## Start on macOS (recommended)
-
-Prerequisites: **Python 3.11+**, **Node.js 20+** (22 recommended), npm and an internet connection to install packages.
-
-1. Extract the ZIP and open Terminal in the `asset-integrity-copilot` project folder.
-2. Run:
-
-   ```bash
-   bash run-mac.command
-   ```
-
-3. Open **http://localhost:5173**. By default you are in **offline preview mode**: document retrieval and SQLite queries work, but no model is called.
-
-The startup script creates `.env` if necessary, installs Python packages, installs frontend dependencies, starts FastAPI on port 8000 and starts Vite on port 5173.
-
-**Manual alternative:**
-
-```bash
-cp .env.example .env
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r backend/requirements-dev.txt
-export PYTHONPATH="$PWD/backend"
-uvicorn app.main:app --reload --port 8000
-# New terminal in project root:
-cd frontend && npm install && npm run dev
-```
-
-## Enable the OpenAI Agents SDK
-
-Edit `.env` in the repository root:
-
-```dotenv
-OPENAI_API_KEY=sk-your-private-key-here
-DEMO_PASSWORD=choose-a-long-random-demo-password
-OPENAI_MODEL=gpt-4.1-mini
-EMBEDDING_MODEL=text-embedding-3-small
-ENABLE_EMBEDDINGS=true
-MAX_ESTIMATED_SPEND_USD=3
-```
-
-Restart the backend. When a password is configured, enter it in the application's access screen. **Never put the API key in React source files, screenshots or GitHub.** OpenAI API billing is separate from ChatGPT subscriptions.
-
-The default model is `gpt-4.1-mini` because it supports tool calling and has broadly supported SDK behavior. The input/output USD rates in `.env.example` are configurable **estimates**, not a price guarantee. Verify your actual API account pricing, billing and limits before live testing.
-
-The `openai-agents` package is only imported for live mode. A first live run may create a local embedding cache (`backend/data/vector_cache.json`), which is excluded from Git. For a $10 balance, keep the demo in offline mode until you need to validate live tool use.
-
-## How a question moves through the code
+## How it works
 
 ```text
-Browser React UI (frontend/src/App.tsx)
-  → api.ts: POST /api/chat
-  → FastAPI (backend/app/main.py)
-  → agent.live_chat() in agent.py
-      offline: Python retrieval + SQLite evidence + deterministic response
-      live: sdk_runtime.py → Agent / Runner.run_sync()
-            ├─ search_documents(query) → retrieval.py → BM25 + optional embeddings
-            ├─ get_asset(asset_id) → db.py → SQLite asset table
-            └─ get_asset_history(asset_id) → db.py → inspections, maintenance, incidents
-  → optional SDK output guardrail: check unsupported DOCUMENT citations/actions
-  → answer, source cards, and tool trace → React
+React UI ──POST /api/chat──► FastAPI ──► Agents SDK Runner
+                                           ├─ search_documents(query)      → BM25 (+ embeddings)
+                                           ├─ get_asset(asset_id)          → SQLite
+                                           └─ get_asset_history(asset_id)  → SQLite
+                                         output guardrail
+                              ◄── answer + sources + tool trace
 ```
 
-The **three agent tools are read-only** and accept validated arguments. The agent cannot issue SQL, run commands, operate pumps/valves or approve reports. The independent `POST /api/reports/draft` endpoint creates a deterministic pending review; `POST /api/reports/{id}/approve` requires explicit human-originated confirmation. This **demonstration approval is NOT real plant authorization**.
+The agent has three tools, all read-only. It can't run SQL, write records or approve anything. Reports are drafted and approved through separate endpoints that only the UI calls, and approval needs an explicit confirmation.
 
-See [Architecture](docs/ARCHITECTURE.md) and [SDK walkthrough](docs/AGENTS_SDK_WALKTHROUGH.md).
+Before an answer is returned, an output guardrail checks every document ID the model cited (like `[SOP-PMP-001]`) against what `search_documents` actually returned during that run. Answers citing documents that weren't retrieved are blocked, as are answers claiming the agent approved or changed something.
 
-## Main API endpoints
+Without an API key and password the app runs in offline mode: the same database and keyword search, with a deterministic summary instead of a model. That's useful for running it locally without spending anything.
 
-| Route | Description |
+More detail in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+## Example questions
+
+| Tag | Scenario |
 |---|---|
-| `GET /api/health` | Basic health information, no password |
-| `GET /api/status` | App mode, model, counts, estimated API usage |
-| `POST /api/chat` | Ask a question with optional 6-message history |
-| `GET /api/documents` / `GET /api/documents/{id}` | Synthetic knowledge base |
-| `GET /api/assets` / `GET /api/assets/{tag}` | Asset registry |
-| `GET /api/assets/{tag}/history` | Inspections, maintenance and incidents |
-| `GET /api/reports` / `POST /api/reports/draft` | Demo reviews |
-| `POST /api/reports/{id}/approve` | Explicit user-confirmed demo approval |
-| `GET /api/docs` | FastAPI OpenAPI docs |
+| `P-204` | Rising vibration and a mechanical seal leak (incident INC-007) |
+| `CV-310` | Actuator lag and positioner feedback mismatch (INC-010) |
+| `PV-120` | Wall thickness trend and external corrosion (INC-012) |
 
-## Run tests and evaluation
+Try "Investigate P-204", or something it should decline, like "Is PV-120 safe to restart?"
+
+## Retrieval evaluation
+
+Keyword retrieval on 36 hand-labelled questions and 10 off-topic ones:
+
+| Hit@1 | Hit@3 | MRR@3 | Off-topic rejected |
+|---:|---:|---:|---:|
+| 91.7% | 100% | 0.958 | 10/10 |
+
+Adding near-miss questions ("best pizza for a pump party") exposed a bug where a single matching word made any question look relevant. Off-topic rejection was 5/10 before the fix. The write-up is in [docs/EVALUATION.md](docs/EVALUATION.md). The questions were written with the documents in view, so treat these numbers as a regression check.
+
+## Running locally
+
+Requires Python 3.11+ and Node 20+.
 
 ```bash
-source .venv/bin/activate
+cp .env.example .env            # add OPENAI_API_KEY and DEMO_PASSWORD for live mode
+python3 -m venv .venv && source .venv/bin/activate
 pip install -r backend/requirements-dev.txt
-PYTHONPATH=backend python -m pytest -q backend/tests
-PYTHONPATH=backend python backend/scripts/evaluate_retrieval.py
-cd frontend && npm run build
+PYTHONPATH=backend uvicorn app.main:app --reload --port 8000
+
+# in a second terminal
+cd frontend && npm ci && npm run dev    # http://localhost:5173
 ```
 
-**Verified during preparation of v4:** 24 offline backend tests passed; the **36-question synthetic BM25 evaluation** measured Hit@1 = 91.7%, Hit@3 = 100.0%, MRR@3 = 0.958; 5/5 unrelated questions rejected. These are **small synthetic corpus retrieval figures**, not live LLM or industrial safety results. Full details: [RETRIEVAL_RESULTS.json](docs/RETRIEVAL_RESULTS.json).
+On macOS, `bash run-mac.command` does all of the above.
 
-**Unverified in the preparation environment:** npm registry could not be reached, so the full React dependency build wasn't completed (TypeScript/TSX source was syntax-parsed); real paid OpenAI Agents SDK calls and deployment to a Render account were not performed. The mocked SDK tests do not prove live cloud compatibility. Follow [LIVE_VERIFICATION.md](docs/LIVE_VERIFICATION.md) on your Mac.
+Live mode turns on only when both `OPENAI_API_KEY` and `DEMO_PASSWORD` are set. See `.env.example` for the other settings (model, embeddings, spend cap, rate limit).
 
-## Deploy to Render
+## Tests
 
-1. Push the extracted repository to **your own private GitHub repository**; don't commit `.env`.
-2. In Render, create a Web Service from the GitHub repo and select **Docker** (or use the included `render.yaml`).
-3. Set private environment variables: `OPENAI_API_KEY`, `DEMO_PASSWORD`. Keep the model setting at `gpt-4.1-mini` unless you've verified another model.
-4. Deploy. Health endpoint: `/api/health`. Backend serves React's compiled `dist` from the same service.
-5. Test the password screen, status, P-204/CV-310/PV-120 queries, pending report, and guarded approval.
+```bash
+python -m pytest -q                                              # 25 offline tests
+PYTHONPATH=backend python backend/scripts/evaluate_retrieval.py  # retrieval metrics
+ruff check backend && (cd frontend && npm run format:check && npm run build)
+```
 
-**Render free-service caveats:** instances can sleep, local filesystem state is ephemeral, and in-process rate/cost counters reset after restart. Seed data recreates; user-approved demo reports may disappear. For actual persistence, use managed Postgres. Don't expose paid live mode without a strong password and appropriate provider-side usage limits.
+The SDK tests mock `Runner`, so they check the wiring (tools, context, guardrail) without calling the API. CI runs all of the above on every push.
 
-## File map
+## Deployment
 
-- `frontend/src/App.tsx`: visual dashboard, chat, document modal, asset details, work orders and approval UI
-- `frontend/src/api.ts`, `types.ts`: typed browser-to-API requests and data contracts
-- `backend/app/main.py`: authenticated FastAPI HTTP routes, rate limiting, safety headers
-- `backend/app/agent.py`: system rules, bounded read-only tool dispatcher, deterministic offline preview, budget estimate
-- `backend/app/sdk_runtime.py`: Agents SDK Agent/Runner/function tools, per-run traces and output guardrail
-- `backend/app/retrieval.py`: section-level BM25, optional cached embedding similarity and citations
-- `backend/app/db.py`: SQLite schema and queries; pending/approved demo reports
-- `backend/data/asset_integrity_seed.json`: 60 linked assets and related records
-- `backend/data/documents.json`: 15 fictional knowledge documents
-- `backend/data/generate_seed.py`, `generate_documents.py`: deterministic data/document generators
-- `backend/scripts/evaluate_retrieval.py`: labeled keyword-search evaluation
-- `backend/tests/`: offline API, security, data integrity and mocked SDK integration tests
-- `docs/`: design, evaluation, live checks, walkthrough and interview talk track
+The Dockerfile builds the frontend and serves it from FastAPI, so it's a single service. On Render, create a Docker web service from this repo (or use `render.yaml`) and set `OPENAI_API_KEY` and `DEMO_PASSWORD` as environment variables.
 
-## Domain and ethical boundaries
+On Render's free tier the instance sleeps when idle and the filesystem resets on redeploy, so approved reports and usage counters don't persist. The seed data is reloaded on startup.
 
-The synthetic documents were informed by broad **mechanical integrity recordkeeping themes** such as those described by [OSHA 29 CFR 1910.119(j)](https://www.osha.gov/laws-regs/regulations/standardnumber/1910/1910.119). This does not establish whether a particular facility is covered by OSHA PSM or demonstrate compliance. The project does not reproduce proprietary API/ASME standards or calculate design limits. Real engineers must use the applicable site-approved procedures, equipment design basis, and verified field data.
+## Project layout
 
-This is an **AI-assisted software development portfolio project**. Be accurate about implementation help, changes you've personally verified, and areas still requiring production engineering.
+```text
+backend/
+  app/
+    main.py           routes, auth, rate limiting
+    agent.py          system prompt, tool dispatcher, offline mode, spend tracking
+    sdk_runtime.py    Agents SDK agent, tools, output guardrail
+    retrieval.py      BM25, embeddings, relevance check
+    db.py             SQLite schema, queries, reports
+  data/               seed data, documents, and the scripts that generate them
+  scripts/            retrieval evaluation
+  tests/
+frontend/src/
+  App.tsx             pages and state
+  components.tsx      shared UI pieces
+  api.ts, types.ts    API client and types
+docs/                 architecture and evaluation notes
+```
+
+## Limitations and next steps
+
+- No agent-level eval yet: tool-call accuracy, citation validity and refusal rate on a fixed question set.
+- The guardrail checks document citations, not database IDs or numbers in the answer.
+- Retrieval has no stemming, so "leaks" doesn't match "leak".
+- SQLite on an ephemeral disk; Postgres would be needed for anything persistent.
+
+## Disclaimer
+
+The documents were written for this project and loosely follow mechanical integrity recordkeeping themes such as [OSHA 29 CFR 1910.119(j)](https://www.osha.gov/laws-regs/regulations/standardnumber/1910/1910.119). They aren't real procedures and contain no design limits. The app doesn't make or support equipment safety decisions, so don't upload real plant documents to it.

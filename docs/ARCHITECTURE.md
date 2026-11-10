@@ -1,72 +1,51 @@
-# System architecture — Asset Integrity Copilot v4
-
-## Design goal
-An independent demonstration of a domain-specific knowledge + structured-record assistant for oil-and-gas reliability engineers. No real industrial control integrations.
+# Architecture
 
 ```text
-+------------------- React + TypeScript --------------------+
-| Overview | Chat | SOPs | Assets | Integrity Reports | Log |
-+---------------------------+-------------------------------+
-                            | same-origin /api HTTP
-+---------------------------v-------------------------------+
-| FastAPI main.py: request schemas, demo auth, rate limit    |
-+---------------------------+-------------------------------+
-                            |
-                  +---------v---------+
-                  | agent.py           |
-                  | safety rules,      |
-                  | offline fallback   |
-                  +---------+---------+
-                            |
-             +--------------v---------------+
-             | sdk_runtime.py (live only)    |
-             | OpenAI Agents SDK Agent/Runner|
-             | SDK output guardrail         |
-             +-----------+------------------+
-                         |
-          +--------------+-------------------+
-          |              |                   |
-  search_documents   get_asset     get_asset_history
-          |              |                   |
-    retrieval.py      db.py              db.py
-   BM25 + optional   assets       inspections, maintenance,
-   embedding index                   incidents
-          |
-   documents.json
-          |
-  citations + tool traces -> response to frontend
+React + TypeScript (frontend/src)
+        │  same-origin /api
+        ▼
+FastAPI (backend/app/main.py)
+  password check, rate limit, request validation
+        │
+        ▼
+agent.py ── offline: deterministic answer from SQLite + keyword search
+        │
+        ▼  live (API key and password both set)
+sdk_runtime.py ── OpenAI Agents SDK Agent + Runner, output guardrail
+        │
+        ├── search_documents(query)      → retrieval.py → documents.json
+        ├── get_asset(asset_id)          → db.py → assets
+        └── get_asset_history(asset_id)  → db.py → inspections, maintenance, incidents
 
-Separate user action: UI -> /reports/draft -> pending SQLite report
-                    UI -> /reports/{id}/approve -> confirmation -> approved
-                    NO agent tool for these writes
+Report workflow (not reachable by the agent):
+  POST /api/reports/draft          → pending report built from database facts
+  POST /api/reports/{id}/approve   → requires an explicit confirmation string
 ```
 
-## Why the two data stores?
+## Two kinds of data
 
-**Unstructured** procedures and incident case write-ups are searched by section using BM25; embeddings are optional in live mode. This is a small local collection, not a deployed vector database.
+**Documents.** Fifteen procedures, incident write-ups and guides in `backend/data/documents.json`. They're split on `##` headings into 77 chunks and searched with BM25. In live mode, OpenAI embeddings are blended in (65% keyword, 35% cosine similarity). The embeddings are cached in `backend/data/vector_cache.json` and recomputed when the documents change.
 
-**Structured** asset tags, inspection observations, maintenance work orders and incidents are linked by SQLite foreign keys. The model cannot write SQL; its read-only tools accept validated asset tags.
+**Records.** Assets, inspections, work orders and incidents live in SQLite, linked by foreign keys and seeded from `asset_integrity_seed.json` on first start. The agent never writes SQL. Its two record tools take an equipment tag, which is validated against `P-###`, `CV-###` or `PV-###` both in the tool schema and again in the Python dispatcher.
 
-## Asset entities
+## Tables
 
-- `assets`: `id`, `name`, `category`, `service`, `unit`, `location`, `status`, `criticality`, `installed_at`, `design_reference`, `description`
-- `inspections`: `id`, `asset_id`, `inspected_at`, `inspection_type`, `metric`, `reading`, `unit`, `outcome`, `inspector`, `notes`
-- `maintenance`: `id`, `asset_id`, `performed_at`, `work_type`, `status`, `description`, `action_taken`, `next_step`
-- `incidents`: `id`, `asset_id`, `severity`, `status`, `issue`, `recorded_at`, `follow_up`
-- `reports`: `id`, `asset_id`, `status` (`pending`/`approved`), `summary`, `created_at`, `approved_at`
+| Table | Columns |
+|---|---|
+| `assets` | id, name, category, service, unit, location, status, criticality, installed_at, design_reference, description |
+| `inspections` | id, asset_id, inspected_at, inspection_type, metric, reading, unit, outcome, inspector, notes |
+| `maintenance` | id, asset_id, performed_at, work_type, status, description, action_taken, next_step |
+| `incidents` | id, asset_id, severity, status, issue, recorded_at, follow_up |
+| `reports` | id, asset_id, status (pending/approved), summary, created_at, approved_at |
 
-The equipment cases `P-204`, `CV-310` and `PV-120` have matching incidents and knowledge documents. Asset history tool returns all three related record types.
+## Guardrails
 
-## Guardrails and limits
+- The agent has three read-only tools. Unknown tool names and malformed arguments are rejected by `dispatch_tool`.
+- `tool_choice="required"` forces at least one lookup before the first answer; the SDK then resets it to `auto`.
+- An output guardrail blocks answers that cite a document ID (e.g. `[SOP-PMP-001]`) that wasn't returned by `search_documents` during the run, and answers that claim the agent approved, deleted or changed something. It doesn't verify every factual statement.
+- Retrieved text is treated as data. The system prompt tells the model to ignore instructions inside documents or tool output.
+- Live requests are serialised and capped by an estimated spend limit, an hourly request limit and a shared password. These protect API credit; they aren't user authentication.
 
-- The SDK agent has three registered read-only function tools.
-- Python dispatcher refuses unknown tools or malformed asset tags.
-- System instructions require source-backed answers and reject document/tool-text commands.
-- The SDK output guardrail checks some unsupported *document* citations and certain false write-action claims; it does not check every factual statement.
-- Model turn limit and serialized paid requests bound the small demonstration.
-- A shared demo password, hourly per-client rate limiting and in-memory estimated usage threshold help limit costs; they are not production identity controls or provider billing enforcement.
-- Human-confirmed report approval is a separate API action; reports are synthetic and have no effect on plant operations.
+## Out of scope
 
-## What the system doesn't do
-
-No live control system connectivity, maintenance scheduling, alarms, vibration diagnostics, anomaly prediction, corrosion rate calculations, remaining life prediction, engineering acceptance criteria, RBI models, actual permit-to-work authorization, multiuser RBAC, persistent audit ledger or guaranteed factual grounding.
+No connection to control systems, no alarm handling, no corrosion-rate or remaining-life calculations, no acceptance criteria, no multi-user roles or audit trail. Reports have no effect outside the app.
