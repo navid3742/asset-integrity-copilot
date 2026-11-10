@@ -1,6 +1,10 @@
 import { useEffect, type ReactNode } from 'react'
 import { X, type LucideIcon } from 'lucide-react'
 
+export function plural(count: number, word: string, pluralWord = `${word}s`) {
+  return `${count} ${count === 1 ? word : pluralWord}`
+}
+
 type Tone = 'green' | 'amber' | 'red' | 'neutral' | 'blue'
 
 const STATUS_TONES: Record<string, Tone> = {

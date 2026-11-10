@@ -44,6 +44,7 @@ import {
   Empty,
   Overlay,
   Pill,
+  plural,
   ProcessSchematic,
   SectionTitle,
   StatCard,
@@ -684,7 +685,7 @@ function App() {
                             <details className="trace-details">
                               <summary>
                                 <Workflow size={14} /> Agent tool trace{' '}
-                                <span>{m.traces.length} steps</span>
+                                <span>{plural(m.traces.length, 'step')}</span>
                               </summary>
                               {m.traces.map((t, i) => (
                                 <div key={i} className="trace-row">
@@ -780,7 +781,7 @@ function App() {
                     placeholder="Search documents by title, ID, or category…"
                   />
                 </div>
-                <span className="tool-count">{filteredDocs.length} DOCUMENTS</span>
+                <span className="tool-count">{plural(filteredDocs.length, 'DOCUMENT')}</span>
               </div>
               <div className="document-grid">
                 {filteredDocs.map((doc) => (
@@ -838,7 +839,9 @@ function App() {
                     placeholder="Search asset tag, type, unit or location…"
                   />
                 </div>
-                <div className="tool-count">{filteredAssets.length} MATCHES</div>
+                <div className="tool-count">
+                  {plural(filteredAssets.length, 'MATCH', 'MATCHES')}
+                </div>
               </div>
               <div className="surface table-panel">
                 <TableShell>
